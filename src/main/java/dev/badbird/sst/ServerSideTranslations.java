@@ -9,10 +9,7 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
 import com.comphenix.protocol.wrappers.*;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import dev.badbird.sst.util.Metrics;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -53,6 +50,7 @@ public final class ServerSideTranslations extends JavaPlugin {
     @Override
     public void onEnable() {
         File datapackFolder = new File("world/datapacks/");
+        Gson gson = new GsonBuilder().setLenient().create();
         Pattern mcFunctionJsonPattern = Pattern.compile("data modify entity .* set value \\'\\{.*\\}\\'");
         for (File file : datapackFolder.listFiles()) {
             if (file.getName().endsWith(".zip")) {
@@ -62,29 +60,39 @@ public final class ServerSideTranslations extends JavaPlugin {
                     ZipEntry entry;
                     while ((entry = zipInputStream.getNextEntry()) != null) {
                         if (entry.getName().endsWith(".json")) {
-                            StringBuilder jsonContent = new StringBuilder();
-                            byte[] buffer = new byte[1024];
-                            int length;
-                            while ((length = zipInputStream.read(buffer)) > 0) {
-                                jsonContent.append(new String(buffer, 0, length));
-                            }
-                            JsonElement element = JsonParser.parseString(jsonContent.toString());
-                            traverseJsonElement(element);
-                        } else if (entry.getName().endsWith(".mcfunction")) {
-                            // match the json pattern
-                            StringBuilder jsonContent = new StringBuilder();
-                            byte[] buffer = new byte[1024];
-                            int length;
-                            while ((length = zipInputStream.read(buffer)) > 0) {
-                                jsonContent.append(new String(buffer, 0, length));
-                            }
-                            String[] lines = jsonContent.toString().split("\n");
-                            for (String line : lines) {
-                                if (mcFunctionJsonPattern.matcher(line).matches()) {
-                                    String json = line.substring(line.indexOf("{"), line.lastIndexOf("}") + 1);
-                                    JsonElement element = JsonParser.parseString(json);
-                                    traverseJsonElement(element);
+                            try {
+                                StringBuilder jsonContent = new StringBuilder();
+                                byte[] buffer = new byte[1024];
+                                int length;
+                                while ((length = zipInputStream.read(buffer)) > 0) {
+                                    jsonContent.append(new String(buffer, 0, length));
                                 }
+                                JsonElement element = gson.fromJson(jsonContent.toString(), JsonElement.class);
+                                traverseJsonElement(element);
+                            } catch (Exception e) {
+                                getLogger().warning("Failed to parse json file " + entry.getName() + " in datapack " + file.getName());
+                                getLogger().warning(e.getMessage());
+                            }
+                        } else if (entry.getName().endsWith(".mcfunction")) {
+                            try {
+                                // match the json pattern
+                                StringBuilder jsonContent = new StringBuilder();
+                                byte[] buffer = new byte[1024];
+                                int length;
+                                while ((length = zipInputStream.read(buffer)) > 0) {
+                                    jsonContent.append(new String(buffer, 0, length));
+                                }
+                                String[] lines = jsonContent.toString().split("\n");
+                                for (String line : lines) {
+                                    if (mcFunctionJsonPattern.matcher(line).matches()) {
+                                        String json = line.substring(line.indexOf("{"), line.lastIndexOf("}") + 1);
+                                        JsonElement element = gson.fromJson(json, JsonElement.class);
+                                        traverseJsonElement(element);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                getLogger().warning("Failed to parse mcfunction file " + entry.getName() + " in datapack " + file.getName());
+                                getLogger().warning(e.getMessage());
                             }
                         }
                     }
