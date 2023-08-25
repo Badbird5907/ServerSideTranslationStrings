@@ -13,6 +13,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.badbird.sst.util.Metrics;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TranslatableComponent;
@@ -239,6 +240,9 @@ public final class ServerSideTranslations extends JavaPlugin {
                 event.setPacket(packet);
             }
         });
+
+        Metrics metrics = new Metrics(this, 19655);
+        metrics.addCustomChart(new Metrics.SimplePie("translation_count", () -> String.valueOf(translations.size())));
     }
 
     public Component translate(Component component, boolean... flags) {
