@@ -3,8 +3,8 @@ plugins {
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
-group = "net.octomc"
-version = "1.0.0"
+group = "dev.badbird"
+version = "1.0.1"
 
 repositories {
     mavenCentral()
