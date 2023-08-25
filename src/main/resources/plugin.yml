@@ -1,0 +1,6 @@
+name: TranslationStringFix
+version: '${version}'
+main: net.octomc.translationstringfix.TranslationStringFix
+api-version: '1.20'
+depend:
+  - ProtocolLib
