@@ -1,6 +1,6 @@
-name: TranslationStringFix
+name: ServerSideTranslationStrings
 version: '${version}'
-main: net.octomc.translationstringfix.TranslationStringFix
+main: dev.badbird.sst.ServerSideTranslations
 api-version: '1.20'
 depend:
   - ProtocolLib

@@ -1,4 +1,4 @@
-package net.octomc.translationstringfix;
+package dev.badbird.sst;
 
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
@@ -20,7 +20,6 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.octomc.translationstringfix.listener.TranslationStringListener;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.inventory.ItemStack;
@@ -35,12 +34,12 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public final class TranslationStringFix extends JavaPlugin {
+public final class ServerSideTranslations extends JavaPlugin {
     private Map<String, Component> translations = new HashMap<>();
     private ProtocolManager protocolManager;
-    private static TranslationStringFix instance;
+    private static ServerSideTranslations instance;
 
-    public static TranslationStringFix getInstance() {
+    public static ServerSideTranslations getInstance() {
         return instance;
     }
 
@@ -93,7 +92,7 @@ public final class TranslationStringFix extends JavaPlugin {
                 }
             }
         }
-        if (Boolean.getBoolean("translationstringfix.debug")) {
+        if (Boolean.getBoolean("sst.debug")) {
             getLogger().info("Found " + translations.size() + " translations:");
             translations.forEach((key, value) -> getLogger().info(" - " + key + " -> " + LegacyComponentSerializer.legacySection().serialize(value)));
         }
@@ -232,7 +231,7 @@ public final class TranslationStringFix extends JavaPlugin {
                     WrappedDataValue value = new WrappedDataValue(
                             2,
                             WrappedDataWatcher.Registry.getChatComponentSerializer(true),
-                            Optional.of(AdventureComponentConverter.fromComponent(TranslationStringFix.getInstance().translate(component)).getHandle())
+                            Optional.of(AdventureComponentConverter.fromComponent(ServerSideTranslations.getInstance().translate(component)).getHandle())
                     );
                     read.add(value);
                     packet.getDataValueCollectionModifier().write(0, read);
@@ -240,7 +239,6 @@ public final class TranslationStringFix extends JavaPlugin {
                 event.setPacket(packet);
             }
         });
-        getServer().getPluginManager().registerEvents(new TranslationStringListener(), this);
     }
 
     public Component translate(Component component, boolean... flags) {

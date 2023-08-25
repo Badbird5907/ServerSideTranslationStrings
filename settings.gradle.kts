@@ -1,1 +1,1 @@
-rootProject.name = "TranslationStringFix"
+rootProject.name = "ServerSideTranslations"

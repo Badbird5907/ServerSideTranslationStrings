@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "net.octomc"
-version = "1.0-SNAPSHOT"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -49,7 +49,7 @@ tasks {
         dependsOn("jar")
         from("build/libs")
         into("run/plugins")
-        rename { "TranslationFix.jar" }
+        rename { "ServerSideTranslations.jar" }
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     }
     // register task called runDev that depends on copyPlugin that runs run/paper.jar
