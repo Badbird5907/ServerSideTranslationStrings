@@ -261,7 +261,9 @@ public final class ServerSideTranslations extends JavaPlugin {
     }
     private void checkFile(File file) {
         if (file.isDirectory()) {
-            checkFile(file);
+            for (File f : file.listFiles()) {
+                checkFile(f);
+            }
         } else {
             if (file.getName().endsWith(".json")) {
                 try {
