@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -36,6 +37,10 @@ public final class ServerSideTranslations extends JavaPlugin {
     private Map<String, Component> translations = new HashMap<>();
     private ProtocolManager protocolManager;
     private static ServerSideTranslations instance;
+
+    private static Gson gson = new GsonBuilder().setLenient().create();
+    private static Pattern mcFunctionJsonPattern = Pattern.compile("data modify entity .* set value \\'\\{.*\\}\\'");
+
 
     public static ServerSideTranslations getInstance() {
         return instance;
@@ -49,9 +54,7 @@ public final class ServerSideTranslations extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        File datapackFolder = new File("world/datapacks/");
-        Gson gson = new GsonBuilder().setLenient().create();
-        Pattern mcFunctionJsonPattern = Pattern.compile("data modify entity .* set value \\'\\{.*\\}\\'");
+        File datapackFolder = new File(System.getProperty("sst.datapackFolder", "world/datapacks/"));
         for (File file : datapackFolder.listFiles()) {
             if (file.getName().endsWith(".zip")) {
                 // go through all files recursively and find .json files
@@ -99,6 +102,10 @@ public final class ServerSideTranslations extends JavaPlugin {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            } else if (file.isDirectory()) {
+                // go through all files recursively and find .json files
+                // then recursively go through all the json files and find this pattern that can be nested:
+                checkFile(file);
             }
         }
         if (Boolean.getBoolean("sst.debug")) {
@@ -252,6 +259,48 @@ public final class ServerSideTranslations extends JavaPlugin {
         Metrics metrics = new Metrics(this, 19655);
         metrics.addCustomChart(new Metrics.SimplePie("translation_count", () -> String.valueOf(translations.size())));
     }
+    private void checkFile(File file) {
+        if (file.isDirectory()) {
+            checkFile(file);
+        } else {
+            if (file.getName().endsWith(".json")) {
+                try {
+                    StringBuilder jsonContent = new StringBuilder();
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = new FileInputStream(file).read(buffer)) > 0) {
+                        jsonContent.append(new String(buffer, 0, length));
+                    }
+                    JsonElement element = gson.fromJson(jsonContent.toString(), JsonElement.class);
+                    traverseJsonElement(element);
+                } catch (Exception e) {
+                    getLogger().warning("Failed to parse json file " + file.getName() + " in datapack " + file.getName());
+                    getLogger().warning(e.getMessage());
+                }
+            } else if (file.getName().endsWith(".mcfunction")) {
+                try {
+                    // match the json pattern
+                    StringBuilder jsonContent = new StringBuilder();
+                    byte[] buffer = new byte[1024];
+                    int length;
+                    while ((length = new FileInputStream(file).read(buffer)) > 0) {
+                        jsonContent.append(new String(buffer, 0, length));
+                    }
+                    String[] lines = jsonContent.toString().split("\n");
+                    for (String line : lines) {
+                        if (mcFunctionJsonPattern.matcher(line).matches()) {
+                            String json = line.substring(line.indexOf("{"), line.lastIndexOf("}") + 1);
+                            JsonElement element = gson.fromJson(json, JsonElement.class);
+                            traverseJsonElement(element);
+                        }
+                    }
+                } catch (Exception e) {
+                    getLogger().warning("Failed to parse mcfunction file " + file.getName() + " in datapack " + file.getName());
+                    getLogger().warning(e.getMessage());
+                }
+            }
+        }
+    }
 
     public Component translate(Component component, boolean... flags) {
         boolean onlyTranslate = flags.length > 0 && flags[0];
@@ -301,6 +350,7 @@ public final class ServerSideTranslations extends JavaPlugin {
 
         return component;
     }
+
 
     private Component applyHoverEventTranslation(Component component, HoverEvent<?> hoverEvent) {
         if (hoverEvent == null) return component;
