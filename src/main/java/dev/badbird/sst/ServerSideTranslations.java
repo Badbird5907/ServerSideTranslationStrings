@@ -54,7 +54,14 @@ public final class ServerSideTranslations extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        File datapackFolder = new File(System.getProperty("sst.datapackFolder", "world/datapacks/"));
+        String folderOverride = System.getProperty("sst.datapackFolder", "");
+        File datapackFolder;
+        if (folderOverride.isEmpty()) {
+            datapackFolder = new File(getServer().getWorlds().get(0).getWorldFolder(), "datapacks");
+        } else {
+            datapackFolder = new File(folderOverride);
+        }
+        getLogger().info("Loading translations from " + datapackFolder.getAbsolutePath());
         for (File file : datapackFolder.listFiles()) {
             if (file.getName().endsWith(".zip")) {
                 // go through all files recursively and find .json files
@@ -108,8 +115,8 @@ public final class ServerSideTranslations extends JavaPlugin {
                 checkFile(file);
             }
         }
+        getLogger().info("Found " + translations.size() + " translations");
         if (Boolean.getBoolean("sst.debug")) {
-            getLogger().info("Found " + translations.size() + " translations:");
             translations.forEach((key, value) -> getLogger().info(" - " + key + " -> " + LegacyComponentSerializer.legacySection().serialize(value)));
         }
         protocolManager.addPacketListener(new PacketAdapter(
