@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -319,32 +318,35 @@ public final class ServerSideTranslations extends JavaPlugin {
         // System.out.println("Type: " + component.getClass().getName() + " | " + LegacyComponentSerializer.legacySection().serialize(component));
 
         if (component instanceof TranslatableComponent translatableComponent) {
-            String key = translatableComponent.key();
-            if (translations.containsKey(key)) {
-                Component c = translations.get(key).style(component.style());
-                for (Component child : translatableComponent.children()) {
-                    c = c.append(translate(child).style(component.style()));
-                }
-                if (!onlyTranslate && !dontTranslateHover) {
-                    HoverEvent<?> hoverEvent = translatableComponent.hoverEvent();
-                    if (hoverEvent != null) {
-                        if (hoverEvent.action() == HoverEvent.Action.SHOW_TEXT) {
-                            Component hoverComponent = (Component) hoverEvent.value();
-                            // getComponentLogger().info("Hover component: (" + hoverComponent.children().size() + ")" + hoverComponent.getClass().getName() + " | " + (hoverComponent instanceof TranslatableComponent ? ((TranslatableComponent) hoverComponent).key() : LegacyComponentSerializer.legacySection().serialize(hoverComponent)));
-                            hoverComponent = translate(hoverComponent, false, true);
-                            // getComponentLogger().info("  - Translated hover component: (" + hoverComponent.children().size() + ")" + hoverComponent.getClass().getName() + " | " + (hoverComponent instanceof TranslatableComponent ? ((TranslatableComponent) hoverComponent).key() : LegacyComponentSerializer.legacySection().serialize(hoverComponent)));
-                            c = c.hoverEvent(HoverEvent.showText(hoverComponent));
+            try {
+                String key = translatableComponent.key();
+                if (translations.containsKey(key)) {
+                    Component c = translations.get(key).style(component.style());
+                    for (Component child : translatableComponent.children()) {
+                        c = c.append(translate(child).style(component.style()));
+                    }
+                    if (!onlyTranslate && !dontTranslateHover) {
+                        HoverEvent<?> hoverEvent = translatableComponent.hoverEvent();
+                        if (hoverEvent != null) {
+                            if (hoverEvent.action() == HoverEvent.Action.SHOW_TEXT) {
+                                Component hoverComponent = (Component) hoverEvent.value();
+                                // getComponentLogger().info("Hover component: (" + hoverComponent.children().size() + ")" + hoverComponent.getClass().getName() + " | " + (hoverComponent instanceof TranslatableComponent ? ((TranslatableComponent) hoverComponent).key() : LegacyComponentSerializer.legacySection().serialize(hoverComponent)));
+                                hoverComponent = translate(hoverComponent, false, true);
+                                // getComponentLogger().info("  - Translated hover component: (" + hoverComponent.children().size() + ")" + hoverComponent.getClass().getName() + " | " + (hoverComponent instanceof TranslatableComponent ? ((TranslatableComponent) hoverComponent).key() : LegacyComponentSerializer.legacySection().serialize(hoverComponent)));
+                                c = c.hoverEvent(HoverEvent.showText(hoverComponent));
+                            }
+                        }
+                        if (translatableComponent.clickEvent() != null) {
+                            c = c.clickEvent(translatableComponent.clickEvent());
                         }
                     }
-                    if (translatableComponent.clickEvent() != null) {
-                        c = c.clickEvent(translatableComponent.clickEvent());
-                    }
+                    return c;
                 }
-                return c;
+                List<Component> args = new ArrayList<>(translatableComponent.args());
+                args.replaceAll(this::translate);
+                component = translatableComponent.args(args);
+            } catch (Exception ignored) {
             }
-            List<Component> args = new ArrayList<>(translatableComponent.args());
-            args.replaceAll(this::translate);
-            component = translatableComponent.args(args);
         }
 
         if (component.hoverEvent() != null && !onlyTranslate && !dontTranslateHover) {
