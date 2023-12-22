@@ -311,6 +311,7 @@ public final class ServerSideTranslations extends JavaPlugin {
     }
 
     public Component translate(Component component, boolean... flags) {
+        if (component == null) return null;
         boolean onlyTranslate = flags.length > 0 && flags[0];
         boolean dontTranslateHover = flags.length > 1 && flags[1];
         if (component instanceof TextComponent tc && tc.content().trim().isEmpty()) return component;
