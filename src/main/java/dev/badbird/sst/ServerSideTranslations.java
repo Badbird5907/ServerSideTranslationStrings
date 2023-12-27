@@ -389,13 +389,14 @@ public final class ServerSideTranslations extends JavaPlugin {
         if (itemStack != null) {
             ItemMeta itemMeta = itemStack.getItemMeta();
             if (itemMeta != null) {
-                List<Component> l = itemMeta.lore();
-                if (l != null) {
-                    List<Component> lore = new ArrayList<>(l);
-                    lore.replaceAll(this::translate);
-                    itemMeta.lore(lore);
-                    itemMeta.displayName(translate(itemMeta.displayName()));
-                    itemStack.setItemMeta(itemMeta);
+                try {
+                    List<Component> l = itemMeta.lore();
+                    if (l != null) {
+                        List<Component> lore = new ArrayList<>(l);
+                        lore.replaceAll(this::translate);
+                        itemMeta.lore(lore);
+                        itemMeta.displayName(translate(itemMeta.displayName()));
+                        itemStack.setItemMeta(itemMeta);
                     /*
                     System.out.println("------------------------");
                     for (Component component : lore) {
@@ -403,6 +404,9 @@ public final class ServerSideTranslations extends JavaPlugin {
                     }
                     System.out.println("------------------------");
                      */
+                    }
+                } catch (Exception ignored) {
+                    return itemStack;
                 }
             }
         }
