@@ -180,11 +180,13 @@ public final class ServerSideTranslations extends JavaPlugin {
                 } // Ignore if paper is unavailable
 
                 if (component == null) {
-                    component = WrappedChatComponent.fromJson(packet.getStrings().read(0));
+                    StructureModifier<String> strings = packet.getStrings();
+                    if (strings.size() > 0)
+                        component = WrappedChatComponent.fromJson(strings.read(0));
                 }
 
-                // Modify component here
-                packet.getStrings().write(0, component.getJson());
+                if (component != null)
+                    packet.getStrings().write(0, component.getJson());
                 /*
                 System.out.println("Found system chat: " + packet.getChatComponents().size() + " | " + packet.getChatTypes().size() + " | " + packet.getChatComponentArrays().size() + " | " + packet.getChatComponentArrays().getValues().size());
                 StructureModifier<WrappedChatComponent> chatComponents = packet.getChatComponents();
